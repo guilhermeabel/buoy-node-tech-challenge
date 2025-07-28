@@ -1,5 +1,10 @@
-import { Entity, Property, PrimaryKey, OneToMany, Collection } from '@mikro-orm/core';
+import { Entity, Property, PrimaryKey, OneToMany, Collection, Enum } from '@mikro-orm/core';
 import { Booking } from './booking.entity';
+
+export enum AccommodationType {
+  HOTEL = 'hotel',
+  APARTMENT = 'apartment'
+}
 
 @Entity()
 export class Accommodation {
@@ -17,6 +22,9 @@ export class Accommodation {
 
   @Property()
   location!: string;
+
+  @Enum(() => AccommodationType)
+  type!: AccommodationType;
 
   @OneToMany(() => Booking, booking => booking.accommodation)
   bookings = new Collection<Booking>(this);
