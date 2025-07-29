@@ -3,6 +3,8 @@ import { MikroORM } from '@mikro-orm/core';
 import mikroOrmConfig from './mikro-orm.config';
 import accommodationRoutes from './routes/accommodation.routes';
 import bookingRoutes from './routes/booking.routes';
+import hotelRoutes from './routes/hotel.routes';
+import apartmentRoutes from './routes/apartment.routes';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 
@@ -40,10 +42,12 @@ const start = async () => {
 
     server.register(accommodationRoutes, { prefix: '/accommodations' });
     server.register(bookingRoutes, { prefix: '/bookings' });
+    server.register(hotelRoutes, { prefix: '/hotels' });
+    server.register(apartmentRoutes, { prefix: '/apartments' });
 
-    await server.listen({ 
+    await server.listen({
       port: Number(process.env.PORT) || 8006,
-      host: '0.0.0.0' 
+      host: '0.0.0.0'
     });
   } catch (err) {
     server.log.error(err);

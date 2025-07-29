@@ -1,10 +1,12 @@
 import { z } from 'zod';
+import { AccommodationType } from '../entities/accommodation.entity';
 
 export const AccommodationSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
   description: z.string().optional(),
   price: z.number().positive('Price must be positive'),
-  location: z.string().min(2, 'Location must be at least 2 characters')
+  location: z.string().min(2, 'Location must be at least 2 characters'),
+  type: z.nativeEnum(AccommodationType)
 });
 
 export type AccommodationInput = z.infer<typeof AccommodationSchema>;
