@@ -52,6 +52,19 @@
           "primary": false,
           "nullable": false,
           "mappedType": "string"
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "enumItems": [
+            "hotel",
+            "apartment"
+          ],
+          "mappedType": "enum"
         }
       },
       "name": "accommodation",
