@@ -71,6 +71,7 @@ describe('BookingService Unit Tests', () => {
 
 				await bookingService.validateBooking(apartment, newStart, newEnd);
 
+				// Standard overlap: existing.start < new.end AND existing.end > new.start
 				expect(mockEntityManager.findOne).toHaveBeenCalledWith(Booking, {
 					accommodation: 1,
 					startDate: { $lt: newEnd },
@@ -93,6 +94,120 @@ describe('BookingService Unit Tests', () => {
 					endDate: { $gt: new Date('2024-01-03') }
 				});
 			});
+		});
+	});
+
+	describe('Next Available Date', () => {
+		describe('Hotel Availability', () => {
+			it('should return the requested date for hotels', async () => {
+				const hotel = { id: 1, type: AccommodationType.HOTEL } as Accommodation;
+				(mockEntityManager.findOneOrFail as jest.Mock).mockResolvedValue(hotel);
+
+				const requestedDate = new Date('2024-01-15');
+				const result = await bookingService.findNextAvailableDate(1, requestedDate);
+
+				expect(result).toEqual(requestedDate);
+				expect(mockEntityManager.findOneOrFail).toHaveBeenCalledWith(Accommodation, { id: 1 });
+			});
+		});
+
+		describe('Apartment Availability', () => {
+			it('should return the requested date when no bookings exist', async () => {
+				const apartment = { id: 1, type: AccommodationType.APARTMENT } as Accommodation;
+				(mockEntityManager.findOneOrFail as jest.Mock).mockResolvedValue(apartment);
+				(mockEntityManager.find as jest.Mock).mockResolvedValue([]);
+
+				const requestedDate = new Date('2024-01-15');
+				const result = await bookingService.findNextAvailableDate(1, requestedDate);
+
+				expect(result).toEqual(requestedDate);
+				expect(mockEntityManager.find).toHaveBeenCalledWith(Booking, {
+					accommodation: 1,
+					endDate: { $gt: requestedDate }
+				}, {
+					orderBy: { startDate: 'ASC' }
+				});
+			});
+
+			it('should return the requested date when it is before existing bookings', async () => {
+				const apartment = { id: 1, type: AccommodationType.APARTMENT } as Accommodation;
+				const booking1 = {
+					startDate: new Date('2024-01-20'),
+					endDate: new Date('2024-01-25')
+				} as Booking;
+
+				(mockEntityManager.findOneOrFail as jest.Mock).mockResolvedValue(apartment);
+				(mockEntityManager.find as jest.Mock).mockResolvedValue([booking1]);
+
+				const requestedDate = new Date('2024-01-15');
+				const result = await bookingService.findNextAvailableDate(1, requestedDate);
+
+				expect(result).toEqual(requestedDate);
+			});
+
+			it('should return date after booking when requested date conflicts', async () => {
+				const apartment = { id: 1, type: AccommodationType.APARTMENT } as Accommodation;
+				const booking1 = {
+					startDate: new Date('2024-01-10'),
+					endDate: new Date('2024-01-20')
+				} as Booking;
+
+				(mockEntityManager.findOneOrFail as jest.Mock).mockResolvedValue(apartment);
+				(mockEntityManager.find as jest.Mock).mockResolvedValue([booking1]);
+
+				const requestedDate = new Date('2024-01-15'); // conflicts with booking
+				const result = await bookingService.findNextAvailableDate(1, requestedDate);
+
+				expect(result).toEqual(new Date('2024-01-20'));
+			});
+
+			it('should find gap between multiple bookings', async () => {
+				const apartment = { id: 1, type: AccommodationType.APARTMENT } as Accommodation;
+				const booking1 = {
+					startDate: new Date('2024-01-05'),
+					endDate: new Date('2024-01-10')
+				} as Booking;
+				const booking2 = {
+					startDate: new Date('2024-01-20'),
+					endDate: new Date('2024-01-25')
+				} as Booking;
+
+				(mockEntityManager.findOneOrFail as jest.Mock).mockResolvedValue(apartment);
+				(mockEntityManager.find as jest.Mock).mockResolvedValue([booking1, booking2]);
+
+				const requestedDate = new Date('2024-01-12');
+				const result = await bookingService.findNextAvailableDate(1, requestedDate);
+
+				expect(result).toEqual(requestedDate); // Should fit in the gap
+			});
+
+			it('should return date after last booking when all earlier dates conflict', async () => {
+				const apartment = { id: 1, type: AccommodationType.APARTMENT } as Accommodation;
+				const booking1 = {
+					startDate: new Date('2024-01-05'),
+					endDate: new Date('2024-01-15')
+				} as Booking;
+				const booking2 = {
+					startDate: new Date('2024-01-15'),
+					endDate: new Date('2024-01-25')
+				} as Booking;
+
+				(mockEntityManager.findOneOrFail as jest.Mock).mockResolvedValue(apartment);
+				(mockEntityManager.find as jest.Mock).mockResolvedValue([booking1, booking2]);
+
+				const requestedDate = new Date('2024-01-10');
+				const result = await bookingService.findNextAvailableDate(1, requestedDate);
+
+				expect(result).toEqual(new Date('2024-01-25'));
+			});
+		});
+
+		it('should handle accommodation not found', async () => {
+			(mockEntityManager.findOneOrFail as jest.Mock).mockRejectedValue(new Error('Accommodation not found'));
+
+			await expect(
+				bookingService.findNextAvailableDate(999, new Date('2024-01-15'))
+			).rejects.toThrow('Accommodation not found');
 		});
 	});
 

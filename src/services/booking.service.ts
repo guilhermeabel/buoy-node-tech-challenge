@@ -24,6 +24,45 @@ export class BookingService {
 		}
 	}
 
+	async findNextAvailableDate(accommodationId: number, fromDate: Date): Promise<Date> {
+		const accommodation = await this.em.findOneOrFail(Accommodation, { id: accommodationId });
+
+		if (accommodation.type === AccommodationType.HOTEL) {
+			return fromDate;
+		}
+
+		return await this.findNextAvailableDateForApartment(accommodationId, fromDate);
+	}
+
+	private async findNextAvailableDateForApartment(accommodationId: number, fromDate: Date): Promise<Date> {
+		// Get all future bookings for this apartment, sorted by start date
+		const futureBookings = await this.em.find(Booking, {
+			accommodation: accommodationId,
+			endDate: { $gt: fromDate }
+		}, {
+			orderBy: { startDate: 'ASC' }
+		});
+
+		if (futureBookings.length === 0) {
+			return fromDate;
+		}
+
+		let candidateDate = new Date(fromDate);
+
+		for (const booking of futureBookings) {
+			if (candidateDate < booking.startDate) {
+				return candidateDate;
+			}
+
+			// If candidate date conflicts with this booking, move to after this booking ends
+			if (candidateDate < booking.endDate) {
+				candidateDate = new Date(booking.endDate);
+			}
+		}
+
+		return candidateDate;
+	}
+
 	async createBooking(data: {
 		accommodationId: number;
 		startDate: Date;

@@ -12,3 +12,9 @@ export const AccommodationSchema = z.object({
 export type AccommodationInput = z.infer<typeof AccommodationSchema>;
 
 export const AccommodationParamsSchema = z.object({ id: z.coerce.number() });
+
+export const NextAvailableDateQuerySchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format').transform(str => new Date(str))
+});
+
+export type NextAvailableDateQuery = z.infer<typeof NextAvailableDateQuerySchema>;
