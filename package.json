@@ -8,7 +8,10 @@
     "migrate": "ts-node ./node_modules/.bin/mikro-orm migration:up",
     "generate-migration": "ts-node ./node_modules/.bin/mikro-orm migration:create",
     "migration:down": "ts-node ./node_modules/.bin/mikro-orm migration:down",
-    "migration:up": "ts-node ./node_modules/.bin/mikro-orm migration:up"
+    "migration:up": "ts-node ./node_modules/.bin/mikro-orm migration:up",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "@fastify/swagger": "^8.12.0",
@@ -28,12 +31,17 @@
     "zod-to-json-schema": "^3.24.1"
   },
   "devDependencies": {
+    "@mikro-orm/cli": "^5.9.0",
+    "@testcontainers/postgresql": "^11.4.0",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.10.0",
     "@types/pg": "^8.10.9",
+    "jest": "^30.0.5",
+    "testcontainers": "^11.4.0",
+    "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.3.2",
-    "@mikro-orm/cli": "^5.9.0"
+    "typescript": "^5.3.2"
   },
   "mikro-orm": {
     "useTsNode": true,
